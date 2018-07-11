@@ -27,8 +27,8 @@ class Vector {
 class Actor {
   constructor(pos = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
     if (!((pos instanceof Vector)&&(size instanceof Vector)&&(speed instanceof Vector))) {
-		throw new Error('Actor.constructor: Все аргументы должны быть типа Vector');
-	}
+  		throw new Error('Actor.constructor: Все аргументы должны быть типа Vector');
+  	}
     this.pos = pos;
     this.size = size;
     this.speed = speed;
@@ -60,8 +60,8 @@ class Actor {
   
   isIntersect(actor = null) {
   	if (!(actor instanceof Actor)) {
-		throw new Error('Actor.isIntersect: Аргументом должен быть объект типа Actor');
-	}
+  		throw new Error('Actor.isIntersect: Аргументом должен быть объект типа Actor');
+  	}
     if (this === actor) {
       return false;
     }
@@ -107,8 +107,8 @@ class Level {
   
   actorAt(actor = null) {
     if (!(actor instanceof Actor)) {
-		throw new Error('Level.actorAt: Аргументом должен быть объект типа Actor');
-	}
+  		throw new Error('Level.actorAt: Аргументом должен быть объект типа Actor');
+  	}
     return this.actors.find((otherActor)=>{
     	return actor.isIntersect(otherActor);
     });
@@ -205,13 +205,112 @@ class LevelParser {
 				for (let j =0; j< textLevel[i].length; j++) {
 					let char = textLevel[i][j];
 					let constr = this.actorFromSymbol(char);
-					if (constructor instanceof Actor) {
-						actor = new constr();
-						result.push(actor);
-					}
+          if (typeof(constr) == 'function') {
+            if ((constr.name == 'Actor')||(constr.__proto__.name == 'Actor')) {
+              let actor = new constr(new Vector(j, i));
+              result.push(actor);
+            }
+          }
 				}
 			}
 		}
 		return result;
 	}
+
+  parse(textLevel) {
+    let level =new Level(this.createGrid(textLevel), this.createActors(textLevel));
+    return level;
+  }
+}
+
+class Fireball extends Actor {
+  constructor (pos = new Vector(0, 0), speed = new Vector(0, 0)) {
+    super(pos, new Vector(1, 1), speed);
+  }
+
+  get type() {
+    return 'fireball';
+  }
+
+  getNextPosition(time = 1) {
+    return this.pos.plus(this.speed.times(time));
+  }
+
+  handleObstacle() {
+    this.speed = this.speed.times(-1);
+  }
+
+  act(time, level) {
+    let nextPosition = this.getNextPosition(time);
+    if (level.obstacleAt(nextPosition, this.size) != undefined) {
+      this.handleObstacle();
+    }
+    else {
+      this.pos = nextPosition;
+    }
+  }
+}
+
+class HorizontalFireball extends Fireball {
+  constructor(pos = new Vector(0, 0)) {
+    super(pos, new Vector(2, 0));
+  }
+}
+
+class VerticalFireball extends Fireball {
+  constructor(pos = new Vector(0, 0)) {
+    super(pos, new Vector(0, 2));
+  }
+}
+
+class FireRain extends Fireball {
+  constructor(pos = new Vector(0, 0)) {
+    super(pos, new Vector(0, 3));
+    this.startPos = pos;
+  }
+
+  handleObstacle() {
+    this.pos = this.startPos;
+  }
+}
+
+class Coin extends Actor {
+  constructor(pos = new Vector(0, 0)) {
+    super(pos.plus(new Vector(0.2, 0.1)), new Vector(0.6, 0.6));
+    this.startPos = this.pos;
+    this.springSpeed = 8;
+    this.springDist = 0.07;
+    this.spring = 2 * Math.PI * Math.random();
+  }
+
+  get type() {
+    return 'coin';
+  }
+
+  updateSpring(time = 1) {
+    this.spring = this.spring + time * this.springSpeed;
+  }
+
+  getSpringVector() {
+    return new Vector(0, Math.sin(this.springDist * this.spring));
+  }
+
+  getNextPosition(time = 1) {
+    this.updateSpring(time);
+    return this.startPos.plus(this.getSpringVector());
+  }
+
+  act(time) {
+    this.pos = this.getNextPosition(time);
+  }
+}
+
+class Player extends Actor {
+  constructor(pos = new Vector(0, 0)) {
+    super(pos.plus(new Vector(0, -0.5)), new Vector(0.8, 1.5), new Vector(0, 0));
+  }
+
+  get type() {
+    return 'player';
+  }
 }
