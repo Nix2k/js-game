@@ -127,6 +127,12 @@ class Level {
     }
     for (let y = Math.floor(actor.top); y < Math.ceil(actor.bottom); y++) {
       for (let x = Math.floor(actor.left); x <  Math.ceil(actor.right); x++) {
+        if (y < 0) {
+          return 'wall';
+        }
+        if (y >= this.grid.length) {
+          return 'lava';
+        }
         if (this.grid[y][x]!=undefined) {
           return this.grid[y][x];
         }
@@ -206,8 +212,8 @@ class LevelParser {
 					let char = textLevel[i][j];
 					let constr = this.actorFromSymbol(char);
           if (typeof(constr) == 'function') {
-            if ((constr.name == 'Actor')||(constr.__proto__.name == 'Actor')) {
-              let actor = new constr(new Vector(j, i));
+            let actor = new constr(new Vector(j, i));
+            if (actor instanceof Actor) {
               result.push(actor);
             }
           }
@@ -314,3 +320,4 @@ class Player extends Actor {
     return 'player';
   }
 }
+
