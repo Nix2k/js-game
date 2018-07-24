@@ -1,20 +1,20 @@
 'use strict';
 
 class Vector {
-	constructor(x=0, y=0) {
-		this.x = x;
-		this.y = y;
-	}
+  constructor(x=0, y=0) {
+    this.x = x;
+    this.y = y;
+  }
 
-	plus(vector) {
-	if (!(vector instanceof Vector)) {
-		throw new Error('Vector.plus: Можно прибавлять к вектору только вектор типа Vector');
-	}
+  plus(vector) {
+    if (!(vector instanceof Vector)) {
+      throw new Error('Vector.plus: Можно прибавлять к вектору только вектор типа Vector');
+    }
 
     let newX = this.x + vector.x;
     let newY = this.y + vector.y;
     return new Vector(newX, newY);
-	}
+  }
     
   times(mult) {
     let newX = mult*this.x;
@@ -27,8 +27,8 @@ class Vector {
 class Actor {
   constructor(pos = new Vector(0, 0), size = new Vector(1, 1), speed = new Vector(0, 0)) {
     if (!((pos instanceof Vector)&&(size instanceof Vector)&&(speed instanceof Vector))) {
-  		throw new Error('Actor.constructor: Все аргументы должны быть типа Vector');
-  	}
+      throw new Error('Actor.constructor: Все аргументы должны быть типа Vector');
+    }
     this.pos = pos;
     this.size = size;
     this.speed = speed;
@@ -59,19 +59,13 @@ class Actor {
   }
   
   isIntersect(actor = null) {
-  	if (!(actor instanceof Actor)) {
-  		throw new Error('Actor.isIntersect: Аргументом должен быть объект типа Actor');
-  	}
-    if (this === actor) {
+    if (!(actor instanceof Actor)) {
+      throw new Error('Actor.isIntersect: Аргументом должен быть объект типа Actor');
+    }
+    if ((this === actor)||(this.right <= actor.left)||(this.left >= actor.right)||(this.bottom <= actor.top)||(this.top >= actor.bottom)) {
       return false;
     }
-    if (((((this.left>=actor.left)&&(this.left<actor.right))||((this.right>actor.left)&&(this.right<=actor.right)))&&
-      (((this.top<actor.bottom)&&(this.top>=actor.top))||((this.bottom<=actor.bottom)&&(this.bottom>actor.top))))||
-      ((((actor.left>this.left)&&(actor.left<this.right))||((actor.right>this.left)&&(actor.right<this.right)))&&
-      (((actor.top<this.bottom)&&(actor.top>this.top))||((actor.bottom<this.bottom)&&(actor.bottom>this.top))))) {
-      return true;
-    }
-    return false;
+    return true;
   }  
 }
 
@@ -80,21 +74,21 @@ class Level {
     this.grid = grid;
     this.actors = actors;
     this.player = actors.find((element)=>{
-    	return element.type==='player';
+      return element.type==='player';
     });
     if ((grid.length == 1)&&(grid[0].length == 0)) {
-    	this.height = 0;
+      this.height = 0;
     }
     else {
-    	this.height = grid.length;
+      this.height = grid.length;
     }
     let maxWidth = 0;
     for (let row of this.grid) {
-	    if (row != undefined) {
-	    	if (row.length > maxWidth) {
-	    		maxWidth = row.length;
-	    	}
-	    }
+      if (row != undefined) {
+        if (row.length > maxWidth) {
+          maxWidth = row.length;
+        }
+      }
     }
     this.width = maxWidth; 
     this.status = null;
@@ -107,17 +101,17 @@ class Level {
   
   actorAt(actor = null) {
     if (!(actor instanceof Actor)) {
-  		throw new Error('Level.actorAt: Аргументом должен быть объект типа Actor');
-  	}
+      throw new Error('Level.actorAt: Аргументом должен быть объект типа Actor');
+    }
     return this.actors.find((otherActor)=>{
-    	return actor.isIntersect(otherActor);
+      return actor.isIntersect(otherActor);
     });
   }
   
   obstacleAt(position, size) {
     if ((!(position instanceof Vector))||(!(size instanceof Vector))) {
-			throw new Error('Level.obstacleAt: Аргументы должны быть объектами типа Vector');
-		}
+      throw new Error('Level.obstacleAt: Аргументы должны быть объектами типа Vector');
+    }
     let actor = new Actor(position, size);
     if (actor.top >= this.height) {
       return 'lava';
@@ -174,57 +168,57 @@ class Level {
 }
 
 class LevelParser {
-	constructor(reference) {
-		this.reference = reference;
-	}
-	
-	actorFromSymbol(char = null) {
-		if ((char == null)||(this.reference == undefined)) {
-			return undefined;
-		}
-		return this.reference[char];
-	}
+  constructor(reference) {
+    this.reference = reference;
+  }
+    
+  actorFromSymbol(char = null) {
+    if ((char == null)||(this.reference == undefined)) {
+      return undefined;
+    }
+    return this.reference[char];
+  }
 
-	obstacleFromSymbol(char = null) {
-		switch (char) {
-			case 'x': return 'wall';
-			case '!': return 'lava';
-		}
-		return undefined;
-	}
+  obstacleFromSymbol(char = null) {
+    switch (char) {
+      case 'x': return 'wall';
+      case '!': return 'lava';
+    }
+    return undefined;
+  }
 
-	createGrid(textLevel) {
-		let grid = [];
-		for (let i = 0; i < textLevel.length; i++) {
-			grid.push([]);
-			for (let char of textLevel[i]) {
-				grid[i].push(this.obstacleFromSymbol(char));
-			}
-		}
-		return grid;
-	}
+  createGrid(textLevel) {
+    let grid = [];
+    for (let i = 0; i < textLevel.length; i++) {
+      grid.push([]);
+      for (let char of textLevel[i]) {
+        grid[i].push(this.obstacleFromSymbol(char));
+      }
+    }
+    return grid;
+  }
 
-	createActors(textLevel) {
-		let result = [];
-		if (this.reference != undefined) {
-			for (let i = 0; i < textLevel.length; i++) {
-				for (let j =0; j< textLevel[i].length; j++) {
-					let char = textLevel[i][j];
-					let constr = this.actorFromSymbol(char);
+  createActors(textLevel) {
+    let result = [];
+    if (this.reference != undefined) {
+      for (let i = 0; i < textLevel.length; i++) {
+        for (let j =0; j< textLevel[i].length; j++) {
+          let char = textLevel[i][j];
+          let constr = this.actorFromSymbol(char);
           if (typeof(constr) == 'function') {
             let actor = new constr(new Vector(j, i));
             if (actor instanceof Actor) {
               result.push(actor);
             }
           }
-				}
-			}
-		}
-		return result;
-	}
+        }
+      }
+    }
+    return result;
+  }
 
   parse(textLevel) {
-    let level =new Level(this.createGrid(textLevel), this.createActors(textLevel));
+    let level = new Level(this.createGrid(textLevel), this.createActors(textLevel));
     return level;
   }
 }
